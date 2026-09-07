@@ -1,0 +1,2 @@
+id_publicacion,fecha,texto,tipo_contenido,likes,comentarios,alcance,red_social,url_publicacion,categoria_sugerida
+EJEMPLO_001,2026-09-01,Texto de la publicación o descripción,Foto,10,2,150,Facebook,https://www.facebook.com/uptsistemas/posts/ejemplo,Académico

@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EPIS - UPT | Dashboard de Inteligencia de Negocios en Redes Sociales</title>
+    <style>
+        :root {
+            --primary: #003366;
+            --primary-light: #0056b3;
+            --accent: #e67e22;
+            --bg: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-muted: #6c757d;
+            --border: #e2e8f0;
+            --success: #27ae60;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 1.25rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .header-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .header-title p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+        .header-actions button {
+            background: white;
+            color: var(--primary);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .header-actions button:hover {
+            background: #e2e8f0;
+        }
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            gap: 1.5rem;
+        }
+        .tab-btn {
+            padding: 1rem 0.5rem;
+            border: none;
+            background: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            position: relative;
+            transition: color 0.2s;
+        }
+        .tab-btn.active {
+            color: var(--primary);
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background-color: var(--primary);
+            border-radius: 3px 3px 0 0;
+        }
+        .main-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem 2rem;
+        }
+        .filter-panel {
+            background: var(--card-bg);
+            padding: 1.25rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            height: fit-content;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+        .filter-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn-reset {
+            font-size: 0.75rem;
+            background: none;
+            border: none;
+            color: var(--primary-light);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .filter-group {
+            margin-bottom: 1.2rem;
+        }
+        .filter-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+        }
+        .filter-group select, .filter-group input {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .kpi-card {
+            background: var(--card-bg);
+            padding: 1.2rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            border-top: 4px solid var(--primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+        }
+        .kpi-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        .kpi-value {
+            font-size: 1.9rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-top: 0.4rem;
+        }
+        .kpi-sub {
+            font-size: 0.75rem;
+            color: var(--success);
+            margin-top: 0.3rem;
+        }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .chart-card {
+            background: var(--card-bg);
+            padding: 1.25rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .chart-card.full-width {
+            grid-column: 1 / -1;
+        }
+        .chart-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+        .table-container {
+            background: var(--card-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            text-align: left;
+        }
+        th {
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid #edf2f7;
+        }
+        tr:hover {
+            background-color: #f8fafc;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-cat { background: #e0f2fe; color: #0369a1; }
+        .badge-tipo { background: #fef3c7; color: #b45309; }
+        .empty-state {
+            padding: 3rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        @media print {
+            header button, .nav-tabs, .filter-panel { display: none; }
+            .main-layout { grid-template-columns: 1fr; }
+            body { background: white; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-title">
+            <h1>EPIS - UPT: Producción en Redes Sociales</h1>
+            <p>Dashboard de Inteligencia de Negocios (SI-885) | facebook.com/uptsistemas</p>
+        </div>
+        <div class="header-actions">
+            <button onclick="window.print()">Exportar a PDF</button>
+        </div>
+    </header>
+
+    <nav class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('resumen')">1. Resumen General (Operacional)</button>
+        <button class="tab-btn" onclick="switchTab('biblioteca')">2. Detalle por Publicación (Biblioteca)</button>
+        <button class="tab-btn" onclick="switchTab('tendencias')">3. Tendencias en el Tiempo (Estratégico)</button>
+    </nav>
+
+    <div class="main-layout">
+        <!-- Panel Lateral de Filtros -->
+        <aside class="filter-panel">
+            <div class="filter-title">
+                <span>Filtros Globales</span>
+                <button class="btn-reset" onclick="resetFilters()">Restablecer</button>
+            </div>
+            <div class="filter-group">
+                <label>Buscar Texto (Biblioteca)</label>
+                <input type="text" id="searchInput" placeholder="Escribe palabras clave..." oninput="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label>Categoría de Contenido</label>
+                <select id="categoriaFilter" onchange="applyFilters()">
+                    <option value="">Todas las Categorías</option>
+                    <option value="Académico">Académico</option>
+                    <option value="Eventos">Eventos</option>
+                    <option value="Logros/Becas">Logros/Becas</option>
+                    <option value="Convocatorias">Convocatorias</option>
+                    <option value="Difusión general">Difusión general</option>
+                    <option value="Otros">Otros</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Tipo de Contenido</label>
+                <select id="tipoFilter" onchange="applyFilters()">
+                    <option value="">Todos los Tipos</option>
+                    <option value="Foto">Foto</option>
+                    <option value="Video">Video</option>
+                    <option value="Texto">Texto</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Mes</label>
+                <select id="mesFilter" onchange="applyFilters()">
+                    <option value="">Todos los Meses</option>
+                    <option value="Marzo">Marzo</option>
+                    <option value="Abril">Abril</option>
+                    <option value="Mayo">Mayo</option>
+                    <option value="Junio">Junio</option>
+                    <option value="Julio">Julio</option>
+                    <option value="Agosto">Agosto</option>
+                    <option value="Septiembre">Septiembre</option>
+                </select>
+            </div>
+        </aside>
+
+        <!-- Contenido Principal Dinámico -->
+        <main>
+            <!-- 4 Tarjetas KPI -->
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <span class="kpi-label">Total Publicaciones</span>
+                    <span class="kpi-value" id="kpiPosts">0</span>
+                    <span class="kpi-sub">Últimos 6 meses</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Total Likes / Reacciones</span>
+                    <span class="kpi-value" id="kpiLikes">0</span>
+                    <span class="kpi-sub">Reacciones orgánicas</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Total Comentarios</span>
+                    <span class="kpi-value" id="kpiComments">0</span>
+                    <span class="kpi-sub">Interacción activa</span>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-label">Alcance Total Estimado</span>
+                    <span class="kpi-value" id="kpiReach">0</span>
+                    <span class="kpi-sub">Visualizaciones</span>
+                </div>
+            </div>
+
+            <!-- Pestaña 1: Resumen General -->
+            <div id="view-resumen" class="view-content">
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>Publicaciones por Mes</h3>
+                        <div id="chartMesContainer" style="height: 240px;"></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Distribución por Tipo de Contenido</h3>
+                        <div id="chartTipoContainer" style="height: 240px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pestaña 2: Detalle por Publicación (Biblioteca) -->
+            <div id="view-biblioteca" class="view-content" style="display: none;">
+                <div class="table-container">
+                    <table id="postsTable">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Categoría</th>
+                                <th>Tipo</th>
+                                <th>Likes</th>
+                                <th>Comentarios</th>
+                                <th>Alcance</th>
+                                <th>Descripción</th>
+                                <th>Enlace</th>
+                            </tr>
+                        </thead>
+                        <tbody id="postsTableBody"></tbody>
+                    </table>
+                    <div id="emptyMessage" class="empty-state" style="display: none;">
+                        No hay publicaciones para los filtros seleccionados
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pestaña 3: Tendencias en el Tiempo -->
+            <div id="view-tendencias" class="view-content" style="display: none;">
+                <div class="charts-grid">
+                    <div class="chart-card full-width">
+                        <h3>Tendencia Temporal de Publicaciones e Interacciones</h3>
+                        <div id="chartTendenciaContainer" style="height: 260px;"></div>
+                    </div>
+                    <div class="chart-card full-width">
+                        <h3>Likes y Comentarios por Categoría de Contenido</h3>
+                        <div id="chartCategoriaContainer" style="height: 260px;"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const rawData = [{"id_publicacion":1,"codigo_publicacion":"FB_UPT_2026_001","fecha":"2026-09-03","año":2026,"mes":9,"nombre_mes":"Septiembre","categoria":"Académico","tipo_contenido":"Foto","red_social":"Facebook","likes":32,"comentarios":5,"alcance":480,"engagement":37,"texto_publicacion":"Webinar Especializado: Transforma tu empresa con IA. Dirigido a estudiantes y profesionales del sector tecnológico. Inscripciones abiertas.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid02zWk9bM1"},{"id_publicacion":2,"codigo_publicacion":"FB_UPT_2026_002","fecha":"2026-09-02","año":2026,"mes":9,"nombre_mes":"Septiembre","categoria":"Académico","tipo_contenido":"Foto","red_social":"Facebook","likes":48,"comentarios":9,"alcance":620,"engagement":57,"texto_publicacion":"Convocatoria al Congreso Internacional de Ingeniería de Sistemas INFONOR 2026. Envío de trabajos de investigación y ponencias científicas.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid03aNx8cD2"},{"id_publicacion":3,"codigo_publicacion":"FB_UPT_2026_003","fecha":"2026-08-31","año":2026,"mes":8,"nombre_mes":"Agosto","categoria":"Académico","tipo_contenido":"Video","red_social":"Facebook","likes":56,"comentarios":12,"alcance":890,"engagement":68,"texto_publicacion":"Webinar: Inteligencia Artificial y nuevas oportunidades en la ingeniería de software moderna con ponentes internacionales de la industria.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid04bOy7eF3"},{"id_publicacion":4,"codigo_publicacion":"FB_UPT_2026_004","fecha":"2026-08-25","año":2026,"mes":8,"nombre_mes":"Agosto","categoria":"Eventos","tipo_contenido":"Foto","red_social":"Facebook","likes":115,"comentarios":28,"alcance":1450,"engagement":143,"texto_publicacion":"Ceremonia de Graduación y Colación de Grados de los bachilleres y titulados en Ingeniería de Sistemas - Promoción 2026. ¡Felicitaciones a los nuevos ingenieros!","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid05cPz6gH4"},{"id_publicacion":5,"codigo_publicacion":"FB_UPT_2026_005","fecha":"2026-08-18","año":2026,"mes":8,"nombre_mes":"Agosto","categoria":"Convocatorias","tipo_contenido":"Foto","red_social":"Facebook","likes":42,"comentarios":14,"alcance":580,"engagement":56,"texto_publicacion":"Convocatoria a Prácticas Pre Profesionales en empresas líderes de desarrollo de software y TI aliadas con la EPIS-UPT.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid06dQa5iJ5"},{"id_publicacion":6,"codigo_publicacion":"FB_UPT_2026_006","fecha":"2026-08-10","año":2026,"mes":8,"nombre_mes":"Agosto","categoria":"Logros\/Becas","tipo_contenido":"Foto","red_social":"Facebook","likes":98,"comentarios":21,"alcance":1320,"engagement":119,"texto_publicacion":"Felicitamos al equipo de estudiantes de la EPIS por obtener el 1er puesto en la Hackathon Regional Tacna Innova 2026 con su proyecto de Smart Health.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid07eRb4kL6"},{"id_publicacion":7,"codigo_publicacion":"FB_UPT_2026_007","fecha":"2026-08-03","año":2026,"mes":8,"nombre_mes":"Agosto","categoria":"Académico","tipo_contenido":"Foto","red_social":"Facebook","likes":39,"comentarios":7,"alcance":510,"engagement":46,"texto_publicacion":"Taller intensivo de Ciberseguridad y Auditoría de Sistemas de Información. Aprende técnicas de pentesting ético y respuesta a incidentes.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid08fSc3mN7"},{"id_publicacion":8,"codigo_publicacion":"FB_UPT_2026_008","fecha":"2026-07-27","año":2026,"mes":7,"nombre_mes":"Julio","categoria":"Difusión general","tipo_contenido":"Foto","red_social":"Facebook","likes":74,"comentarios":8,"alcance":950,"engagement":82,"texto_publicacion":"¡Felices Fiestas Patrias! La Escuela Profesional de Ingeniería de Sistemas saluda a toda la comunidad universitaria y a nuestra patria en este 28 de Julio.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid09gTd2oP8"},{"id_publicacion":9,"codigo_publicacion":"FB_UPT_2026_009","fecha":"2026-07-20","año":2026,"mes":7,"nombre_mes":"Julio","categoria":"Académico","tipo_contenido":"Texto","red_social":"Facebook","likes":26,"comentarios":4,"alcance":390,"engagement":30,"texto_publicacion":"Recordatorio de entrega de notas finales y actas de evaluación correspondientes al primer corte del semestre 2026-I a través del portal docente.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid10hUe1qR9"},{"id_publicacion":10,"codigo_publicacion":"FB_UPT_2026_010","fecha":"2026-07-14","año":2026,"mes":7,"nombre_mes":"Julio","categoria":"Logros\/Becas","tipo_contenido":"Foto","red_social":"Facebook","likes":83,"comentarios":19,"alcance":1180,"engagement":102,"texto_publicacion":"Beca de Movilidad Académica Internacional UPT: Se apertura postulación para pasantías estudiantiles en universidades de Chile y Colombia.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid11iVf0sT0"},{"id_publicacion":11,"codigo_publicacion":"FB_UPT_2026_011","fecha":"2026-07-06","año":2026,"mes":7,"nombre_mes":"Julio","categoria":"Eventos","tipo_contenido":"Video","red_social":"Facebook","likes":128,"comentarios":34,"alcance":1820,"engagement":162,"texto_publicacion":"Video resumen de la Semana de Ingeniería de Sistemas: Conferencias magistrales, feria de prototipos de robótica y torneo de programación competitiva.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid12jWg9uV1"},{"id_publicacion":12,"codigo_publicacion":"FB_UPT_2026_012","fecha":"2026-06-28","año":2026,"mes":6,"nombre_mes":"Junio","categoria":"Convocatorias","tipo_contenido":"Foto","red_social":"Facebook","likes":51,"comentarios":11,"alcance":710,"engagement":62,"texto_publicacion":"Convocatoria abierta para conformar el Capítulo Estudiantil IEEE Computer Society EPIS-UPT periodo 2026-2027.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid13kXh8wX2"},{"id_publicacion":13,"codigo_publicacion":"FB_UPT_2026_013","fecha":"2026-06-20","año":2026,"mes":6,"nombre_mes":"Junio","categoria":"Eventos","tipo_contenido":"Foto","red_social":"Facebook","likes":104,"comentarios":23,"alcance":1390,"engagement":127,"texto_publicacion":"Feria de Proyectos de Innovación Tecnológica e Inteligencia de Negocios de los cursos de la EPIS. Exposición abierta en el Campus Capanique.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid14lYi7yZ3"},{"id_publicacion":14,"codigo_publicacion":"FB_UPT_2026_014","fecha":"2026-06-12","año":2026,"mes":6,"nombre_mes":"Junio","categoria":"Académico","tipo_contenido":"Foto","red_social":"Facebook","likes":47,"comentarios":8,"alcance":630,"engagement":55,"texto_publicacion":"Conferencia Magistral: Arquitecturas Modernas de Cloud Computing y Microservicios en Kubernetes por el Ing. Carlos Mendoza.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid15mZj6aB4"},{"id_publicacion":15,"codigo_publicacion":"FB_UPT_2026_015","fecha":"2026-06-05","año":2026,"mes":6,"nombre_mes":"Junio","categoria":"Difusión general","tipo_contenido":"Foto","red_social":"Facebook","likes":36,"comentarios":3,"alcance":460,"engagement":39,"texto_publicacion":"La EPIS-UPT conmemora el Día Mundial del Medio Ambiente promoviendo iniciativas de Green IT y eficiencia energética en centros de cómputo.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid16nAk5cD5"},{"id_publicacion":16,"codigo_publicacion":"FB_UPT_2026_016","fecha":"2026-05-28","año":2026,"mes":5,"nombre_mes":"Mayo","categoria":"Académico","tipo_contenido":"Video","red_social":"Facebook","likes":65,"comentarios":18,"alcance":920,"engagement":83,"texto_publicacion":"Video tutorial: Proceso de matrícula extemporánea y rectificación de asignaturas 2026-I para estudiantes regulares.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid17oBl4eF6"},{"id_publicacion":17,"codigo_publicacion":"FB_UPT_2026_017","fecha":"2026-05-20","año":2026,"mes":5,"nombre_mes":"Mayo","categoria":"Logros\/Becas","tipo_contenido":"Foto","red_social":"Facebook","likes":112,"comentarios":25,"alcance":1560,"engagement":137,"texto_publicacion":"Reconocimiento a egresados destacados de la EPIS que actualmente lideran equipos de ingeniería en empresas tecnológicas globales.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid18pCm3gH7"},{"id_publicacion":18,"codigo_publicacion":"FB_UPT_2026_018","fecha":"2026-05-12","año":2026,"mes":5,"nombre_mes":"Mayo","categoria":"Difusión general","tipo_contenido":"Foto","red_social":"Facebook","likes":88,"comentarios":15,"alcance":1120,"engagement":103,"texto_publicacion":"Saludo muy especial a todas las madres de la Escuela de Sistemas en su día, en especial a nuestras docentes, estudiantes y colaboradoras.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid19qDn2iJ8"},{"id_publicacion":19,"codigo_publicacion":"FB_UPT_2026_019","fecha":"2026-05-04","año":2026,"mes":5,"nombre_mes":"Mayo","categoria":"Académico","tipo_contenido":"Foto","red_social":"Facebook","likes":58,"comentarios":13,"alcance":770,"engagement":71,"texto_publicacion":"Charla informativa: Certificaciones de AWS Academy y Cisco Networking Academy disponibles gratuitamente para alumnos de Sistemas.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid20rEo1kL9"},{"id_publicacion":20,"codigo_publicacion":"FB_UPT_2026_020","fecha":"2026-04-26","año":2026,"mes":4,"nombre_mes":"Abril","categoria":"Otros","tipo_contenido":"Texto","red_social":"Facebook","likes":31,"comentarios":6,"alcance":430,"engagement":37,"texto_publicacion":"Comunicado oficial sobre horarios de laboratorios y salas de servidores para el desarrollo de proyectos de fin de carrera.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid21sFp0mN0"},{"id_publicacion":21,"codigo_publicacion":"FB_UPT_2026_021","fecha":"2026-04-18","año":2026,"mes":4,"nombre_mes":"Abril","categoria":"Eventos","tipo_contenido":"Foto","red_social":"Facebook","likes":135,"comentarios":41,"alcance":1950,"engagement":176,"texto_publicacion":"Jornada de Integración Estudiantil EPIS 2026: Torneo relámpago de fútbol, básquet y torneos de videojuegos e-sports.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid22tGq9oP1"},{"id_publicacion":22,"codigo_publicacion":"FB_UPT_2026_022","fecha":"2026-04-10","año":2026,"mes":4,"nombre_mes":"Abril","categoria":"Convocatorias","tipo_contenido":"Foto","red_social":"Facebook","likes":44,"comentarios":16,"alcance":610,"engagement":60,"texto_publicacion":"Convocatoria para Ayudantes de Cátedra en las áreas de Algoritmos, Bases de Datos, Redes y Sistemas Inteligentes.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid23uHr8qR2"},{"id_publicacion":23,"codigo_publicacion":"FB_UPT_2026_023","fecha":"2026-04-02","año":2026,"mes":4,"nombre_mes":"Abril","categoria":"Difusión general","tipo_contenido":"Video","red_social":"Facebook","likes":91,"comentarios":20,"alcance":1280,"engagement":111,"texto_publicacion":"Video institucional de bienvenida y recorrido por los nuevos laboratorios de cómputo de alto rendimiento y ciencia de datos.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid24vIs7sT3"},{"id_publicacion":24,"codigo_publicacion":"FB_UPT_2026_024","fecha":"2026-03-25","año":2026,"mes":3,"nombre_mes":"Marzo","categoria":"Eventos","tipo_contenido":"Foto","red_social":"Facebook","likes":105,"comentarios":27,"alcance":1490,"engagement":132,"texto_publicacion":"Inicio oficial de clases del Semestre Académico 2026-I. ¡Éxitos a todos los futuros ingenieros en este nuevo ciclo!","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid25wJt6uV4"},{"id_publicacion":25,"codigo_publicacion":"FB_UPT_2026_025","fecha":"2026-03-17","año":2026,"mes":3,"nombre_mes":"Marzo","categoria":"Académico","tipo_contenido":"Texto","red_social":"Facebook","likes":38,"comentarios":9,"alcance":510,"engagement":47,"texto_publicacion":"Publicación del calendario académico oficial 2026-I y cronograma de pagos para estudiantes de pregrado.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid26xKu5wX5"},{"id_publicacion":26,"codigo_publicacion":"FB_UPT_2026_026","fecha":"2026-03-08","año":2026,"mes":3,"nombre_mes":"Marzo","categoria":"Difusión general","tipo_contenido":"Foto","red_social":"Facebook","likes":69,"comentarios":10,"alcance":880,"engagement":79,"texto_publicacion":"Conmemoración del Día Internacional de la Mujer: Saludamos y destacamos el aporte de nuestras docentes y futuras ingenieras de sistemas.","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid27yLv4yZ6"},{"id_publicacion":27,"codigo_publicacion":"FB_UPT_2026_027","fecha":"2026-03-02","año":2026,"mes":3,"nombre_mes":"Marzo","categoria":"Convocatorias","tipo_contenido":"Foto","red_social":"Facebook","likes":82,"comentarios":19,"alcance":1150,"engagement":101,"texto_publicacion":"Examen de Admisión Ordinario 2026-I: ¡Forma parte de la carrera que lidera la transformación digital del país!","url_publicacion":"https:\/\/www.facebook.com\/uptsistemas\/posts\/pfbid28zMw3aB7"}];
+        let currentTab = 'resumen';
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.view-content').forEach(view => view.style.display = 'none');
+            
+            if (tabName === 'resumen') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                document.getElementById('view-resumen').style.display = 'block';
+            } else if (tabName === 'biblioteca') {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('view-biblioteca').style.display = 'block';
+            } else if (tabName === 'tendencias') {
+                document.querySelectorAll('.tab-btn')[2].classList.add('active');
+                document.getElementById('view-tendencias').style.display = 'block';
+            }
+            applyFilters();
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('categoriaFilter').value = '';
+            document.getElementById('tipoFilter').value = '';
+            document.getElementById('mesFilter').value = '';
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const cat = document.getElementById('categoriaFilter').value;
+            const tipo = document.getElementById('tipoFilter').value;
+            const mes = document.getElementById('mesFilter').value;
+
+            const filtered = rawData.filter(p => {
+                const matchQuery = !query || p.texto_publicacion.toLowerCase().includes(query) || p.categoria.toLowerCase().includes(query);
+                const matchCat = !cat || p.categoria === cat;
+                const matchTipo = !tipo || p.tipo_contenido === tipo;
+                const matchMes = !mes || p.nombre_mes === mes;
+                return matchQuery && matchCat && matchTipo && matchMes;
+            });
+
+            updateKPIs(filtered);
+            renderBiblioteca(filtered);
+            renderCharts(filtered);
+        }
+
+        function updateKPIs(data) {
+            const totPosts = data.length;
+            const totLikes = data.reduce((acc, p) => acc + p.likes, 0);
+            const totComments = data.reduce((acc, p) => acc + p.comentarios, 0);
+            const totReach = data.reduce((acc, p) => acc + p.alcance, 0);
+
+            document.getElementById('kpiPosts').textContent = totPosts.toLocaleString();
+            document.getElementById('kpiLikes').textContent = totLikes.toLocaleString();
+            document.getElementById('kpiComments').textContent = totComments.toLocaleString();
+            document.getElementById('kpiReach').textContent = totReach.toLocaleString();
+        }
+
+        function renderBiblioteca(data) {
+            const tbody = document.getElementById('postsTableBody');
+            const emptyMsg = document.getElementById('emptyMessage');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                emptyMsg.style.display = 'block';
+                return;
+            }
+            emptyMsg.style.display = 'none';
+
+            data.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="white-space:nowrap;"><strong>${p.fecha}</strong></td>
+                    <td><span class="badge badge-cat">${p.categoria}</span></td>
+                    <td><span class="badge badge-tipo">${p.tipo_contenido}</span></td>
+                    <td>${p.likes}</td>
+                    <td>${p.comentarios}</td>
+                    <td>${p.alcance}</td>
+                    <td style="max-width: 320px;">${p.texto_publicacion}</td>
+                    <td><a href="${p.url_publicacion}" target="_blank" style="color:var(--primary-light);font-weight:600;">Ver Post</a></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderCharts(data) {
+            // 1. Chart Mes (SVG Bar)
+            const meses = ['Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre'];
+            const mesCounts = meses.map(m => data.filter(p => p.nombre_mes === m).length);
+            const maxVal = Math.max(...mesCounts, 1);
+            
+            let barsHtml = `<div style="display:flex;align-items:flex-end;height:180px;gap:16px;padding-top:20px;">`;
+            meses.forEach((m, idx) => {
+                const h = (mesCounts[idx] / maxVal) * 140;
+                barsHtml += `
+                    <div style="flex:1;text-align:center;display:flex;flex-direction:column;align-items:center;">
+                        <span style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:4px;">${mesCounts[idx]}</span>
+                        <div style="width:100%;max-width:36px;height:${h}px;background:var(--primary-light);border-radius:4px 4px 0 0;"></div>
+                        <span style="font-size:11px;color:var(--text-muted);margin-top:6px;">${m.substring(0,3)}</span>
+                    </div>
+                `;
+            });
+            barsHtml += `</div>`;
+            document.getElementById('chartMesContainer').innerHTML = barsHtml;
+
+            // 2. Chart Tipo Contenido (Dona/Barras proporcionales)
+            const tipos = ['Foto', 'Video', 'Texto'];
+            const tipoCounts = tipos.map(t => data.filter(p => p.tipo_contenido === t).length);
+            const totT = Math.max(data.length, 1);
+            
+            let tipoHtml = `<div style="display:flex;flex-direction:column;gap:12px;padding-top:10px;">`;
+            tipos.forEach((t, idx) => {
+                const pct = Math.round((tipoCounts[idx] / totT) * 100);
+                const color = t === 'Foto' ? '#003366' : (t === 'Video' ? '#e67e22' : '#7f8c8d');
+                tipoHtml += `
+                    <div>
+                        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:4px;">
+                            <span>${t}</span>
+                            <span>${tipoCounts[idx]} posts (${pct}%)</span>
+                        </div>
+                        <div style="width:100%;height:14px;background:#edf2f7;border-radius:7px;overflow:hidden;">
+                            <div style="width:${pct}%;height:100%;background:${color};"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            tipoHtml += `</div>`;
+            document.getElementById('chartTipoContainer').innerHTML = tipoHtml;
+
+            // 3. Tendencia Líneas (Estratégico)
+            const mesEng = meses.map(m => data.filter(p => p.nombre_mes === m).reduce((a, b) => a + b.engagement, 0));
+            const maxEng = Math.max(...mesEng, 1);
+            let tendHtml = `<div style="display:flex;align-items:flex-end;height:180px;gap:16px;padding-top:20px;">`;
+            meses.forEach((m, idx) => {
+                const h = (mesEng[idx] / maxEng) * 140;
+                tendHtml += `
+                    <div style="flex:1;text-align:center;display:flex;flex-direction:column;align-items:center;">
+                        <span style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:4px;">${mesEng[idx]}</span>
+                        <div style="width:100%;max-width:32px;height:${h}px;background:var(--accent);border-radius:4px 4px 0 0;"></div>
+                        <span style="font-size:11px;color:var(--text-muted);margin-top:6px;">${m.substring(0,3)}</span>
+                    </div>
+                `;
+            });
+            tendHtml += `</div>`;
+            document.getElementById('chartTendenciaContainer').innerHTML = tendHtml;
+
+            // 4. Categoría Barras Apiladas (Likes + Comentarios)
+            const cats = ['Académico', 'Eventos', 'Logros/Becas', 'Convocatorias', 'Difusión general', 'Otros'];
+            let catHtml = `<div style="display:flex;flex-direction:column;gap:10px;">`;
+            cats.forEach(c => {
+                const cPosts = data.filter(p => p.categoria === c);
+                const cLikes = cPosts.reduce((a, b) => a + b.likes, 0);
+                const cComms = cPosts.reduce((a, b) => a + b.comentarios, 0);
+                catHtml += `
+                    <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
+                        <span style="width:120px;font-weight:600;white-space:nowrap;">${c}</span>
+                        <div style="flex:1;display:flex;height:18px;border-radius:4px;overflow:hidden;background:#edf2f7;">
+                            <div style="width:${cLikes / 5}%;background:var(--primary);title='Likes: ${cLikes}'"></div>
+                            <div style="width:${cComms / 5}%;background:var(--accent);title='Comentarios: ${cComms}'"></div>
+                        </div>
+                        <span style="width:110px;text-align:right;color:var(--text-muted);font-weight:bold;">${cLikes} L / ${cComms} C</span>
+                    </div>
+                `;
+            });
+            catHtml += `</div>`;
+            document.getElementById('chartCategoriaContainer').innerHTML = catHtml;
+        }
+
+        // Inicializar dashboard al cargar
+        window.onload = () => {
+            applyFilters();
+        };
+    </script>
+</body>
+</html>

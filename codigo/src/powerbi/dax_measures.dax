@@ -1,0 +1,101 @@
+/* ====================================================================
+   CATÁLOGO DE MEDIDAS DAX — PROYECTO BI EPIS-UPT (SI-885)
+   Diseño acorde a design.md y spec.md
+   ==================================================================== */
+
+-- 1. MEDIDAS BASE (KPIS OPERACIONALES)
+
+Total Publicaciones = 
+COUNTROWS('hecho_publicacion')
+
+Total Likes = 
+SUM('hecho_publicacion'[likes])
+
+Total Comentarios = 
+SUM('hecho_publicacion'[comentarios])
+
+Total Alcance = 
+SUM('hecho_publicacion'[alcance])
+
+Total Engagement = 
+[Total Likes] + [Total Comentarios]
+
+
+-- 2. MEDIDAS DE RENDIMIENTO Y PROMEDIOS
+
+Engagement Promedio por Post = 
+DIVIDE(
+    [Total Engagement],
+    [Total Publicaciones],
+    0
+)
+
+Likes Promedio por Post = 
+DIVIDE(
+    [Total Likes],
+    [Total Publicaciones],
+    0
+)
+
+Comentarios Promedio por Post = 
+DIVIDE(
+    [Total Comentarios],
+    [Total Publicaciones],
+    0
+)
+
+
+-- 3. MEDIDAS DE RATIO Y PARTICIPACIÓN (%)
+
+% Likes sobre Engagement = 
+DIVIDE(
+    [Total Likes],
+    [Total Engagement],
+    0
+)
+
+% Comentarios sobre Engagement = 
+DIVIDE(
+    [Total Comentarios],
+    [Total Engagement],
+    0
+)
+
+% del Total de Publicaciones = 
+DIVIDE(
+    [Total Publicaciones],
+    CALCULATE([Total Publicaciones], ALL('hecho_publicacion')),
+    0
+)
+
+
+-- 4. MEDIDAS PARA TENDENCIAS Y COMPARATIVAS (NIVEL TÁCTICO/ESTRATÉGICO)
+
+Publicaciones Mes Anterior = 
+CALCULATE(
+    [Total Publicaciones],
+    DATEADD('dim_tiempo'[fecha], -1, MONTH)
+)
+
+Crecimiento Publicaciones MoM = 
+DIVIDE(
+    [Total Publicaciones] - [Publicaciones Mes Anterior],
+    [Publicaciones Mes Anterior],
+    0
+)
+
+Engagement Mes Anterior = 
+CALCULATE(
+    [Total Engagement],
+    DATEADD('dim_tiempo'[fecha], -1, MONTH)
+)
+
+
+-- 5. MEDIDA DE CONTROL DE FILTROS VACÍOS (ESTADO ESPECIAL)
+
+Mensaje Estado Filtro = 
+IF(
+    ISBLANK([Total Publicaciones]) || [Total Publicaciones] = 0,
+    "No hay publicaciones para los filtros seleccionados",
+    BLANK()
+)
