@@ -33,7 +33,7 @@
 |---|:---:|---|
 | **Sierra Ruiz, Iker Alberto** | `2023077090` | Extracción de datos, Pipeline ETL, Modelado Dimensional SQLite y Pruebas Unitarias |
 | **Mamani Cori, Cristhian Carlos** | `74168234` | Análisis Exploratorio (EDA), Minería K-Means, Documentación de Requerimientos y Arquitectura |
-| **Jahuira Pilco, Dayan Elvis** | `2022234124` | Modelado DAX, Diseño de Dashboards Power BI, Visor Interactivo Web y Auditoría de Datos |
+| **Jahuira Pilco, Dayan Elvis** | `2022075749` | Modelado DAX, Diseño de Dashboards Power BI, Visor Interactivo Web y Auditoría de Datos |
 
 - **Curso:** SI-885 Inteligencia de Negocios  
 - **Semestre:** 2026-I  
