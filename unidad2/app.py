@@ -91,6 +91,11 @@ def main() -> None:
         for col, metric, label in zip(cols, ("likes", "comments", "shares"), ("Reacciones", "Comentarios", "Compartidos")):
             result = _sum_known(posts, metric)
             col.metric(label, "Sin datos" if result is None else f"{result:,}")
+        interactions = posts.groupby("date_key")[["likes", "comments", "shares"]].sum(min_count=1).sort_index()
+        if interactions.notna().any().any():
+            st.line_chart(interactions)
+        else:
+            st.info("La fuente no publicó métricas de interacción para este filtro.")
         st.dataframe(posts[["date_key", "platform", "post_url", "likes", "comments", "shares", "reach", "impressions", "metrics_captured_at"]],
                      hide_index=True, width="stretch", column_config={"post_url": st.column_config.LinkColumn("Publicación original")})
     with tab6:
@@ -102,6 +107,8 @@ def main() -> None:
         c3.metric("Capturas de métricas", q["snapshots"])
         c4.metric("Errores de integridad", q["fk_errors"])
         st.caption(f"Última importación: {q['last_import'] or 'ninguna'} · Publicaciones con alguna métrica ausente: {q['missing_metrics']}")
+        missing = posts.assign(metricas_ausentes=posts[["likes", "comments", "shares", "reach", "impressions"]].isna().sum(axis=1))
+        st.bar_chart(missing.groupby("platform")["metricas_ausentes"].sum())
         st.dataframe(posts[["post_url", "account", "source_kind", "source_sha256", "evidence_sha256", "authorization_reference", "public_source_url", "metrics_captured_at"]],
                      hide_index=True, width="stretch", column_config={"post_url": st.column_config.LinkColumn("Fuente")})
 

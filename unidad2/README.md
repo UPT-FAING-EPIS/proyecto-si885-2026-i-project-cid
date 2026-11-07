@@ -43,6 +43,8 @@ El repositorio de la primera unidad no contiene las credenciales ni el código d
 
 GitHub Actions ejecuta las pruebas y genera un diagrama del modelo físico directamente desde `schema.sql`, disponible como artefacto descargable del flujo.
 
+El avance real frente a cada punto de la consigna se registra en [`docs/cumplimiento.md`](docs/cumplimiento.md). Los componentes del presupuesto se enumeran en [`docs/costos.md`](docs/costos.md); su cifra final requiere conocer la región y la cuenta de AWS.
+
 ## Modelo y seis reportes
 
 - `fact_post`: una fila por publicación, identificada por plataforma + ID externo.
