@@ -1,0 +1,26 @@
+name: epis-social-u2
+services:
+  dashboard:
+    build:
+      context: ..
+      dockerfile: unidad2/Dockerfile
+    restart: unless-stopped
+    environment:
+      EPIS_DB_PATH: /app/unidad2/data/observatorio.db
+    volumes:
+      - ./data:/app/unidad2/data
+    ports:
+      - "127.0.0.1:${EPIS_PORT:-8502}:8501"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  worker:
+    build:
+      context: ..
+      dockerfile: unidad2/Dockerfile
+    restart: unless-stopped
+    command: ["sh", "-c", "while true; do python -m unidad2.inbox_ingest --inbox /app/unidad2/data/incoming --db /app/unidad2/data/observatorio.db; sleep 3600; done"]
+    volumes:
+      - ./data:/app/unidad2/data

@@ -1,0 +1,10 @@
+{
+  "platform": "REEMPLAZAR",
+  "account_id": "REEMPLAZAR",
+  "account_label": "REEMPLAZAR",
+  "student_affiliation_evidence": "REEMPLAZAR_CON_REFERENCIA_VERIFICABLE",
+  "authorization_reference": "REEMPLAZAR_CON_REFERENCIA_DE_AUTORIZACION",
+  "source_kind": "official_export",
+  "source_evidence_path": "REEMPLAZAR_CON_RUTA_DEL_ARCHIVO_ORIGINAL",
+  "exported_at": "REEMPLAZAR_CON_FECHA_ISO_8601"
+}
