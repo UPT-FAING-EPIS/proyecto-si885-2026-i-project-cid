@@ -80,10 +80,19 @@ def _read_manifest(path: Path) -> dict:
     if platform not in HOSTS:
         raise ValueError("platform: usar facebook, instagram o linkedin")
     manifest["platform"] = platform
-    for field in ("account_id", "account_label", "student_affiliation_evidence", "authorization_reference", "source_kind", "source_evidence_path", "exported_at"):
+    for field in ("account_id", "account_label", "student_affiliation_evidence", "source_kind", "source_evidence_path", "exported_at"):
         manifest[field] = _required(manifest.get(field), field)
-    if manifest["source_kind"] not in ("official_export", "authorized_api"):
-        raise ValueError("source_kind: usar official_export o authorized_api")
+    if manifest["source_kind"] not in ("official_export", "authorized_api", "public_web_capture"):
+        raise ValueError("source_kind: usar official_export, authorized_api o public_web_capture")
+    if manifest["source_kind"] == "public_web_capture":
+        manifest["public_source_url"] = _valid_url(_required(manifest.get("public_source_url"), "public_source_url"), platform)
+        affiliation = urlparse(manifest["student_affiliation_evidence"])
+        if affiliation.scheme != "https" or not affiliation.hostname:
+            raise ValueError("student_affiliation_evidence: se requiere URL pública verificable")
+        manifest["authorization_reference"] = None
+    else:
+        manifest["authorization_reference"] = _required(manifest.get("authorization_reference"), "authorization_reference")
+        manifest["public_source_url"] = None
     manifest["exported_at"] = _timestamp(manifest["exported_at"], "exported_at").isoformat()
     evidence = Path(manifest["source_evidence_path"])
     if not evidence.is_absolute():
@@ -153,10 +162,11 @@ def import_batch(manifest_path: str | Path, csv_path: str | Path, db_path: str |
             cur = conn.execute(
                 """INSERT INTO import_batch
                 (source_sha256,evidence_sha256,platform,account_id,account_label,source_kind,
-                 authorization_reference,affiliation_evidence,exported_at,imported_at,row_count)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                 authorization_reference,public_source_url,affiliation_evidence,exported_at,imported_at,row_count)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (source_sha, manifest["evidence_sha256"], manifest["platform"], manifest["account_id"],
                  manifest["account_label"], manifest["source_kind"], manifest["authorization_reference"],
+                 manifest["public_source_url"],
                  manifest["student_affiliation_evidence"], manifest["exported_at"],
                  datetime.now(timezone.utc).isoformat(), len(rows)),
             )

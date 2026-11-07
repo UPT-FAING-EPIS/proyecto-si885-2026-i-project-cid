@@ -4,7 +4,7 @@ Esta implementación conserva intacta la entrega de la primera unidad. Solo inco
 
 ## Contrato de datos
 
-Cada lote consiste en un CSV y un manifiesto JSON. El CSV debe ser una exportación oficial de la cuenta o una transcripción verificable de una exportación oficial. El manifiesto identifica la cuenta, la plataforma, la evidencia y la autorización para usar sus datos. Nunca se colocan tokens en el repositorio.
+Cada lote consiste en un CSV y un manifiesto JSON. Se aceptan dos rutas: una exportación de una cuenta administrada o una captura de publicaciones públicamente visibles. En la segunda ruta no se exige acceso a la cuenta: se guardan la URL original y una captura/HTML como evidencia. El manifiesto identifica la cuenta, la plataforma y cómo se acreditó su relación con EPIS. Nunca se colocan tokens en el repositorio.
 
 Columnas CSV: `post_id,post_url,published_at,content_type,topic,project,likes,comments,shares,reach,impressions,metrics_captured_at`.
 
@@ -14,7 +14,7 @@ Columnas CSV: `post_id,post_url,published_at,content_type,topic,project,likes,co
 - La cuenta del manifiesto debe estar verificada como productora estudiantil EPIS. Una publicación institucional sobre estudiantes no cumple automáticamente este criterio.
 - El archivo de evidencia original se conserva fuera del repositorio público. Su hash SHA-256 queda registrado en la base.
 
-Ejemplo de **estructura**, sin registros numéricos: `templates/publicaciones.csv` y `templates/manifiesto.json`. Reemplace todos los campos del manifiesto con valores verificables antes de importar.
+Ejemplos de **estructura**, sin registros numéricos: `templates/publicaciones.csv`, `templates/manifiesto.json` y `templates/manifiesto_publico.json`. Reemplace todos los campos del manifiesto con valores verificables antes de importar.
 
 ## Ejecutar
 

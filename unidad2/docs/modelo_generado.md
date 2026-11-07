@@ -11,6 +11,7 @@ erDiagram
     TEXT account_label
     TEXT source_kind
     TEXT authorization_reference
+    TEXT public_source_url
     TEXT affiliation_evidence
     TEXT exported_at
     TEXT imported_at

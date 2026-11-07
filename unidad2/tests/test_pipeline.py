@@ -117,3 +117,18 @@ def test_cloud_worker_imports_complete_batch_and_reports_missing_file(tmp_path, 
     assert result["imported"] == 1
     assert len(result["failed"]) == 1
     assert quality(tmp_path / "warehouse.db")["posts"] == 1
+
+
+def test_public_capture_needs_no_account_permission_but_keeps_public_evidence(tmp_path):
+    manifest, data = _fixture(tmp_path)
+    metadata = json.loads(manifest.read_text(encoding="utf-8"))
+    metadata["source_kind"] = "public_web_capture"
+    metadata.pop("authorization_reference")
+    metadata["public_source_url"] = "https://www.linkedin.com/posts/cuenta-prueba_post-1"
+    metadata["student_affiliation_evidence"] = "https://www.example.edu/epis/equipo"
+    manifest.write_text(json.dumps(metadata), encoding="utf-8")
+    db = tmp_path / "warehouse.db"
+    assert import_batch(manifest, data, db)["status"] == "imported"
+    post = load_posts(db).iloc[0]
+    assert post["source_kind"] == "public_web_capture"
+    assert post["public_source_url"] == metadata["public_source_url"]

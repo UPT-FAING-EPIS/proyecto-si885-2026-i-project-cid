@@ -5,8 +5,8 @@ Continuación del proyecto para la Unidad II de Inteligencia de Negocios. El sis
 ## Estado actual
 
 - Código nuevo en [`unidad2/`](./unidad2/README.md): ingesta validada, almacén dimensional, seis reportes, automatización de carga desde S3 y propuesta de infraestructura Terraform.
-- No hay cifras de demostración en el dashboard. Hasta importar una exportación auténtica, la aplicación muestra que no existen publicaciones verificadas.
-- Falta confirmar las cuentas o exportaciones autorizadas y el acceso a la infraestructura para cargar datos reales y desplegar.
+- No hay cifras de demostración en el dashboard. Hasta importar publicaciones públicas verificadas o una exportación auténtica, la aplicación muestra que no existen publicaciones verificadas.
+- Falta reunir publicaciones reales y confirmar el acceso a la infraestructura para desplegar.
 
 ## Primera unidad
 

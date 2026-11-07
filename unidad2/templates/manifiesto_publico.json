@@ -1,0 +1,10 @@
+{
+  "platform": "REEMPLAZAR",
+  "account_id": "REEMPLAZAR",
+  "account_label": "REEMPLAZAR",
+  "student_affiliation_evidence": "https://REEMPLAZAR_CON_URL_PUBLICA_QUE_ACREDITE_RELACION_EPIS",
+  "source_kind": "public_web_capture",
+  "public_source_url": "https://REEMPLAZAR_CON_URL_DE_LA_PUBLICACION",
+  "source_evidence_path": "REEMPLAZAR_CON_RUTA_DE_CAPTURA_O_HTML",
+  "exported_at": "REEMPLAZAR_CON_FECHA_ISO_8601"
+}

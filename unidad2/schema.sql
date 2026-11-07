@@ -7,8 +7,9 @@ CREATE TABLE IF NOT EXISTS import_batch (
     platform TEXT NOT NULL,
     account_id TEXT NOT NULL,
     account_label TEXT NOT NULL,
-    source_kind TEXT NOT NULL CHECK (source_kind IN ('official_export', 'authorized_api')),
-    authorization_reference TEXT NOT NULL,
+    source_kind TEXT NOT NULL CHECK (source_kind IN ('official_export', 'authorized_api', 'public_web_capture')),
+    authorization_reference TEXT,
+    public_source_url TEXT,
     affiliation_evidence TEXT NOT NULL,
     exported_at TEXT NOT NULL,
     imported_at TEXT NOT NULL,
@@ -80,7 +81,7 @@ SELECT p.id, p.external_id, p.post_url, p.published_at, p.date_key,
        s.captured_at AS metrics_captured_at,
        s.likes, s.comments, s.shares, s.reach, s.impressions,
        b.source_kind, b.source_sha256, b.evidence_sha256,
-       b.authorization_reference
+       b.authorization_reference, b.public_source_url
 FROM fact_post p
 JOIN dim_date d ON d.date_key = p.date_key
 JOIN dim_platform pl ON pl.id = p.platform_id

@@ -2,13 +2,13 @@
 
 ## Alcance
 
-Una publicación entra al almacén únicamente cuando existe evidencia de que fue producida por una cuenta participante de estudiantes EPIS y un archivo fuente autorizado. El vínculo a un repositorio GitHub puede describir el proyecto difundido, pero no cuenta como publicación social.
+Una publicación entra al almacén únicamente cuando existe evidencia de que fue producida por una cuenta de estudiantes EPIS y un archivo fuente verificable. Puede provenir de una exportación autorizada o de una publicación públicamente visible con captura de evidencia. El vínculo a un repositorio GitHub puede describir el proyecto difundido, pero no cuenta como publicación social.
 
 ## Arquitectura de datos
 
 ```mermaid
 flowchart LR
-  F[Exportación oficial o API autorizada] --> S[S3 privado: lote y evidencia original]
+  F[Exportación autorizada o publicación pública] --> S[S3 privado: lote y evidencia original]
   S --> W[Worker ETL horario]
   W --> V[Validación de identidad, fechas, URL y métricas]
   V --> D[(SQLite dimensional en EC2)]
@@ -54,7 +54,7 @@ flowchart TD
 - El cero es un dato observado; vacío significa que la fuente no entregó el valor.
 - Reacciones, comentarios y compartidos se presentan por separado. Alcance e impresiones se presentan por publicación, sin sumar plataformas como si compartieran definición.
 - Una cuenta de GitHub no demuestra matrícula en EPIS. La atribución estudiantil exige evidencia adicional en el manifiesto.
-- El sistema valida estructura, consistencia y hash, pero la autenticidad del archivo y del permiso requiere revisión humana del documento original.
+- El sistema valida estructura, consistencia y hash, pero la autenticidad de la captura y la relación de la cuenta con EPIS requieren revisión humana de las fuentes originales.
 - La base SQLite reside en el volumen de EC2. Puede reconstruirse desde los lotes de S3; para disponibilidad institucional continua habría que planificar copias de seguridad y operación del servidor.
 
 ## Infraestructura y costos
