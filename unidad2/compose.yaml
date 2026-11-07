@@ -1,0 +1,39 @@
+services:
+  dashboard:
+    build:
+      context: ..
+      dockerfile: unidad2/Dockerfile
+    restart: unless-stopped
+    environment:
+      EPIS_DB_PATH: /app/unidad2/data/observatorio.db
+    volumes:
+      - ./data:/app/unidad2/data
+    expose:
+      - "8501"
+  worker:
+    build:
+      context: ..
+      dockerfile: unidad2/Dockerfile
+    restart: unless-stopped
+    command: ["sh", "-c", "while true; do python -m unidad2.cloud_ingest; sleep 3600; done"]
+    environment:
+      EPIS_SOURCE_BUCKET: ${EPIS_SOURCE_BUCKET:?Debe configurar EPIS_SOURCE_BUCKET}
+      EPIS_DB_PATH: /app/unidad2/data/observatorio.db
+      AWS_DEFAULT_REGION: ${AWS_REGION:?Debe configurar AWS_REGION}
+    volumes:
+      - ./data:/app/unidad2/data
+  proxy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      SITE_HOST: ${SITE_HOST:?Debe configurar SITE_HOST}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - dashboard
+volumes:
+  caddy_data:
