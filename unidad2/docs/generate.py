@@ -24,9 +24,11 @@ def generate() -> str:
             lines.append(f"    {data_type or 'TEXT'} {name}{label}")
         lines.append("  }")
     for table in TABLES:
+        required = {col[1]: bool(col[3]) for col in conn.execute(f"PRAGMA table_info({table})")}
         for fk in conn.execute(f"PRAGMA foreign_key_list({table})"):
             _, _, parent, source, _, *_ = fk
-            lines.append(f"  {parent} ||--o{{ {table} : {source}")
+            cardinality = "||" if required[source] else "o|"
+            lines.append(f"  {parent} {cardinality}--o{{ {table} : {source}")
     lines += ["```", "", "## Granularidad", "", "- `fact_post`: una fila por plataforma e ID de publicación.",
               "- `fact_metric_snapshot`: una fila por publicación y momento de captura.", ""]
     conn.close()

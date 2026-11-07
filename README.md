@@ -5,8 +5,8 @@ Continuación del proyecto para la Unidad II de Inteligencia de Negocios. El sis
 ## Estado actual
 
 - Código nuevo en [`unidad2/`](./unidad2/README.md): ingesta validada, almacén dimensional, seis reportes, automatización de carga desde S3 y propuesta de infraestructura Terraform.
-- No hay cifras de demostración en el dashboard. Hasta importar publicaciones públicas verificadas o una exportación auténtica, la aplicación muestra que no existen publicaciones verificadas.
-- Falta reunir publicaciones reales y confirmar el acceso a la infraestructura para desplegar.
+- Hay una primera carga local de nueve publicaciones reales de LinkedIn, con enlaces y transcripción de evidencia; los datos están excluidos de Git. Las métricas no observadas permanecen vacías.
+- Seis gráficos funcionan localmente. Falta ampliar la muestra, obtener fechas exactas de publicación y verificar el VPS para desplegar. La página pública anterior todavía no sirve esta versión.
 
 ## Primera unidad
 

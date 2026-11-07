@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from unidad2.database import initialize
+
 SCHEMA = Path(__file__).with_name("schema.sql")
 
 
@@ -16,6 +18,7 @@ def load_posts(db_path: str | Path) -> pd.DataFrame:
         return pd.DataFrame()
     with sqlite3.connect(path) as conn:
         conn.execute("PRAGMA foreign_keys = ON")
+        initialize(conn)
         return pd.read_sql_query("SELECT * FROM report_post_latest ORDER BY date_key DESC, id DESC", conn)
 
 
@@ -37,9 +40,19 @@ def quality(db_path: str | Path) -> dict:
 
 
 def filtered(df: pd.DataFrame, year: int | None = None, month: int | None = None,
-             day: int | None = None, platform: str | None = None) -> pd.DataFrame:
+             day: int | None = None, platform: str | None = None,
+             date_basis: str = "publication") -> pd.DataFrame:
     if df.empty:
         return df
+    df = df.copy()
+    if date_basis not in ("publication", "capture"):
+        raise ValueError("date_basis: publication o capture")
+    if date_basis == "capture":
+        dates = pd.to_datetime(df["metrics_captured_at"], utc=True).dt.tz_convert("America/Lima")
+        df["year"], df["month"], df["day"] = dates.dt.year, dates.dt.month, dates.dt.day
+        df["analysis_date"] = dates.dt.strftime("%Y-%m-%d")
+    else:
+        df["analysis_date"] = df["date_key"]
     mask = pd.Series(True, index=df.index)
     for column, value in (("year", year), ("month", month), ("day", day), ("platform", platform)):
         if value is not None:

@@ -49,10 +49,11 @@ CREATE TABLE IF NOT EXISTS fact_post (
     account_id INTEGER NOT NULL REFERENCES dim_account(id),
     project_id INTEGER REFERENCES dim_project(id),
     content_type_id INTEGER REFERENCES dim_content_type(id),
-    date_key TEXT NOT NULL REFERENCES dim_date(date_key),
+    date_key TEXT REFERENCES dim_date(date_key),
     external_id TEXT NOT NULL,
     post_url TEXT NOT NULL,
-    published_at TEXT NOT NULL,
+    published_at TEXT,
+    published_label TEXT,
     topic TEXT,
     first_batch_id INTEGER NOT NULL REFERENCES import_batch(id),
     UNIQUE(platform_id, external_id)
@@ -75,15 +76,15 @@ CREATE INDEX IF NOT EXISTS idx_post_date ON fact_post(date_key);
 CREATE INDEX IF NOT EXISTS idx_snapshot_post_time ON fact_metric_snapshot(post_id, captured_at DESC);
 
 CREATE VIEW IF NOT EXISTS report_post_latest AS
-SELECT p.id, p.external_id, p.post_url, p.published_at, p.date_key,
+SELECT p.id, p.external_id, p.post_url, p.published_at, p.published_label, p.date_key,
        d.year, d.month, d.day, pl.name AS platform, a.label AS account,
        pr.name AS project, ct.name AS content_type, p.topic,
        s.captured_at AS metrics_captured_at,
        s.likes, s.comments, s.shares, s.reach, s.impressions,
        b.source_kind, b.source_sha256, b.evidence_sha256,
-       b.authorization_reference, b.public_source_url
+       b.authorization_reference, b.public_source_url, b.affiliation_evidence
 FROM fact_post p
-JOIN dim_date d ON d.date_key = p.date_key
+LEFT JOIN dim_date d ON d.date_key = p.date_key
 JOIN dim_platform pl ON pl.id = p.platform_id
 JOIN dim_account a ON a.id = p.account_id
 LEFT JOIN dim_project pr ON pr.id = p.project_id

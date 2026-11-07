@@ -23,7 +23,7 @@ erDiagram
   dim_account ||--o{ fact_post : produce
   dim_project o|--o{ fact_post : difunde
   dim_content_type o|--o{ fact_post : usa
-  dim_date ||--o{ fact_post : fecha
+  dim_date o|--o{ fact_post : fecha
   fact_post ||--o{ fact_metric_snapshot : capturas
   import_batch ||--o{ fact_post : origen
   import_batch ||--o{ fact_metric_snapshot : origen
@@ -52,6 +52,7 @@ flowchart TD
 ## Métricas y límites
 
 - El cero es un dato observado; vacío significa que la fuente no entregó el valor.
+- La fecha exacta de publicación puede ser nula. Se conserva la etiqueta relativa original y se permite filtrar por captura de forma explícita, sin confundir ambos momentos.
 - Reacciones, comentarios y compartidos se presentan por separado. Alcance e impresiones se presentan por publicación, sin sumar plataformas como si compartieran definición.
 - Una cuenta de GitHub no demuestra matrícula en EPIS. La atribución estudiantil exige evidencia adicional en el manifiesto.
 - El sistema valida estructura, consistencia y hash, pero la autenticidad de la captura y la relación de la cuenta con EPIS requieren revisión humana de las fuentes originales.

@@ -7,9 +7,13 @@ import csv
 import hashlib
 import json
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
+
+from unidad2.database import initialize
+
+PERU = timezone(timedelta(hours=-5))
 
 ROOT = Path(__file__).resolve().parent
 COLUMNS = (
@@ -39,7 +43,7 @@ def _timestamp(value: str, field: str) -> datetime:
         raise ValueError(f"{field}: fecha ISO 8601 inválida") from exc
     if result.tzinfo is None or result.utcoffset() is None:
         raise ValueError(f"{field}: falta zona horaria")
-    return result
+    return result.astimezone(PERU)
 
 
 def _required(value: object, field: str) -> str:
@@ -100,7 +104,31 @@ def _read_manifest(path: Path) -> dict:
     if not evidence.is_file():
         raise ValueError(f"No existe la evidencia original: {evidence}")
     manifest["evidence_sha256"] = _sha256(evidence)
+    manifest["evidence_path"] = evidence
     return manifest
+
+
+def _validate_observation(manifest: dict, rows: list[dict]) -> None:
+    """Conciliar transcripciones estructuradas con el CSV; el hash no prueba veracidad."""
+    if manifest.get("evidence_format") != "epis_observation_v1":
+        return
+    evidence = json.loads(manifest["evidence_path"].read_text(encoding="utf-8"))
+    if evidence.get("account_id") != manifest["account_id"]:
+        raise ValueError("Evidencia: cuenta contradictoria")
+    observations = {item["post_id"]: item for item in evidence["observations"]}
+    for row in rows:
+        item = observations.get(row["post_id"])
+        if item is None or item["post_url"] != row["post_url"]:
+            raise ValueError("Evidencia: publicación o URL no conciliada")
+        if _timestamp(evidence["captured_at"], "captured_at").isoformat() != row["captured_at"]:
+            raise ValueError("Evidencia: fecha de captura no conciliada")
+        for metric in METRICS:
+            if item.get(metric) != row[metric]:
+                raise ValueError(f"Evidencia: {metric} no coincide con la observación")
+        observed_date = item.get("published_at")
+        normalized = _timestamp(observed_date, "published_at").isoformat() if observed_date else None
+        if normalized != row["published_at"] or item.get("published_label") != row["published_label"]:
+            raise ValueError("Evidencia: fecha de publicación no conciliada")
 
 
 def _read_rows(path: Path, platform: str) -> list[dict]:
@@ -113,8 +141,12 @@ def _read_rows(path: Path, platform: str) -> list[dict]:
         for line, raw in enumerate(reader, start=2):
             post_id = _required(raw.get("post_id"), f"línea {line} post_id")
             captured = _timestamp(_required(raw.get("metrics_captured_at"), f"línea {line} metrics_captured_at"), "metrics_captured_at")
-            published = _timestamp(_required(raw.get("published_at"), f"línea {line} published_at"), "published_at")
-            if captured < published:
+            published_raw = (raw.get("published_at") or "").strip()
+            published = _timestamp(published_raw, "published_at") if published_raw else None
+            label = (raw.get("published_label") or "").strip()
+            if published is None and not label:
+                raise ValueError(f"línea {line}: falta published_at o published_label observado")
+            if published is not None and captured < published:
                 raise ValueError(f"línea {line}: captura anterior a publicación")
             key = (post_id, captured.isoformat())
             if key in seen:
@@ -123,8 +155,9 @@ def _read_rows(path: Path, platform: str) -> list[dict]:
             item = {
                 "post_id": post_id,
                 "post_url": _valid_url(raw.get("post_url") or "", platform),
-                "published_at": published.isoformat(),
-                "date_key": published.date().isoformat(),
+                "published_at": published.isoformat() if published else None,
+                "published_label": label or None,
+                "date_key": published.date().isoformat() if published else None,
                 "captured_at": captured.isoformat(),
                 "content_type": (raw.get("content_type") or "").strip(),
                 "topic": (raw.get("topic") or "").strip(),
@@ -146,17 +179,20 @@ def import_batch(manifest_path: str | Path, csv_path: str | Path, db_path: str |
     manifest_path, csv_path, db_path = map(Path, (manifest_path, csv_path, db_path))
     manifest = _read_manifest(manifest_path)
     rows = _read_rows(csv_path, manifest["platform"])
+    _validate_observation(manifest, rows)
     source_sha = _sha256(csv_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(db_path) as conn:
         conn.execute("PRAGMA foreign_keys = ON")
         conn.execute("PRAGMA journal_mode = WAL")
-        conn.executescript((ROOT / "schema.sql").read_text(encoding="utf-8"))
+        initialize(conn)
         existing = conn.execute(
-            "SELECT id FROM import_batch WHERE source_sha256=? AND platform=? AND account_id=?",
+            "SELECT id,evidence_sha256 FROM import_batch WHERE source_sha256=? AND platform=? AND account_id=?",
             (source_sha, manifest["platform"], manifest["account_id"]),
         ).fetchone()
         if existing:
+            if existing[1] != manifest["evidence_sha256"]:
+                raise ValueError("El CSV ya existe pero cambió su evidencia original")
             return {"status": "already_imported", "batch_id": existing[0], "rows": len(rows)}
         with conn:
             cur = conn.execute(
@@ -182,27 +218,33 @@ def import_batch(manifest_path: str | Path, csv_path: str | Path, db_path: str |
             ).fetchone()[0]
             inserted_posts = inserted_snapshots = 0
             for row in rows:
-                date = datetime.fromisoformat(row["published_at"])
-                conn.execute(
-                    "INSERT OR IGNORE INTO dim_date(date_key,year,month,day) VALUES (?,?,?,?)",
-                    (row["date_key"], date.year, date.month, date.day),
-                )
+                if row["published_at"]:
+                    date = datetime.fromisoformat(row["published_at"])
+                    conn.execute(
+                        "INSERT OR IGNORE INTO dim_date(date_key,year,month,day) VALUES (?,?,?,?)",
+                        (row["date_key"], date.year, date.month, date.day),
+                    )
                 project_id = _dimension(conn, "dim_project", row["project"]) if row["project"] else None
                 content_id = _dimension(conn, "dim_content_type", row["content_type"]) if row["content_type"] else None
                 cur = conn.execute(
                     """INSERT OR IGNORE INTO fact_post
-                    (platform_id,account_id,project_id,content_type_id,date_key,external_id,post_url,published_at,topic,first_batch_id)
-                    VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                    (platform_id,account_id,project_id,content_type_id,date_key,external_id,post_url,published_at,published_label,topic,first_batch_id)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
                     (platform_id, account_id, project_id, content_id, row["date_key"], row["post_id"],
-                     row["post_url"], row["published_at"], row["topic"], batch_id),
+                     row["post_url"], row["published_at"], row["published_label"], row["topic"], batch_id),
                 )
                 inserted_posts += cur.rowcount
                 post = conn.execute(
                     "SELECT id,account_id,post_url,published_at FROM fact_post WHERE platform_id=? AND external_id=?",
                     (platform_id, row["post_id"]),
                 ).fetchone()
-                if post[1:] != (account_id, row["post_url"], row["published_at"]):
+                if post[1:3] != (account_id, row["post_url"]):
                     raise ValueError(f"Post {row['post_id']}: identidad o URL contradictoria")
+                if post[3] and row["published_at"] and _timestamp(post[3], "published_at").isoformat() != row["published_at"]:
+                    raise ValueError(f"Post {row['post_id']}: fecha de publicación contradictoria")
+                if post[3] is None and row["published_at"]:
+                    conn.execute("UPDATE fact_post SET published_at=?,date_key=? WHERE id=?",
+                                 (row["published_at"], row["date_key"], post[0]))
                 old = conn.execute(
                     """SELECT likes,comments,shares,reach,impressions FROM fact_metric_snapshot
                     WHERE post_id=? AND captured_at=?""", (post[0], row["captured_at"]),

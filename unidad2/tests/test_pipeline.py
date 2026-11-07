@@ -132,3 +132,93 @@ def test_public_capture_needs_no_account_permission_but_keeps_public_evidence(tm
     post = load_posts(db).iloc[0]
     assert post["source_kind"] == "public_web_capture"
     assert post["public_source_url"] == metadata["public_source_url"]
+
+
+def test_relative_dates_remain_unknown_and_capture_filters_are_explicit(tmp_path):
+    manifest, data = _fixture(tmp_path)
+    with data.open(encoding="utf-8", newline="") as file:
+        row = next(csv.DictReader(file))
+    row.update(published_at="", published_label="3 sem")
+    with data.open("w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=[*COLUMNS, "published_label"])
+        writer.writeheader()
+        writer.writerow(row)
+    db = tmp_path / "warehouse.db"
+    import_batch(manifest, data, db)
+    posts = load_posts(db)
+    assert posts.iloc[0]["published_at"] is None
+    assert posts.iloc[0]["date_key"] is None
+    assert posts.iloc[0]["published_label"] == "3 sem"
+    assert filtered(posts, year=2026).empty
+    assert len(filtered(posts, year=2026, month=10, day=10, date_basis="capture")) == 1
+    # Una evidencia posterior con fecha exacta puede completar el dato sin duplicar el post.
+    manifest, data = _fixture(tmp_path, captured="2026-10-11T15:00:00-05:00")
+    import_batch(manifest, data, db)
+    posts = load_posts(db)
+    assert len(posts) == 1
+    assert posts.iloc[0]["date_key"] == "2026-10-09"
+    assert quality(db)["snapshots"] == 2
+
+
+def test_snapshot_order_uses_instant_not_original_timezone_text(tmp_path):
+    manifest, data = _fixture(tmp_path, captured="2026-10-10T23:30:00+09:00", likes="5")
+    db = tmp_path / "warehouse.db"
+    import_batch(manifest, data, db)
+    manifest, data = _fixture(tmp_path, captured="2026-10-10T10:00:00-05:00", likes="8")
+    import_batch(manifest, data, db)
+    assert load_posts(db).iloc[0]["likes"] == 8
+    manifest, data = _fixture(tmp_path, captured="2026-10-10T15:00:00Z", likes="9")
+    with pytest.raises(ValueError, match="contradictorias"):
+        import_batch(manifest, data, db)
+
+
+def test_schema_migration_preserves_existing_posts_and_snapshots(tmp_path):
+    from unidad2.database import SCHEMA, initialize
+    manifest, data = _fixture(tmp_path)
+    db = tmp_path / "warehouse.db"
+    # Recrear la versión anterior sin la columna de fecha relativa.
+    schema = SCHEMA.read_text(encoding="utf-8").replace("    published_label TEXT,\n", "")
+    schema = schema.replace("p.published_at, p.published_label,", "p.published_at,")
+    schema = schema.replace("date_key TEXT REFERENCES", "date_key TEXT NOT NULL REFERENCES")
+    schema = schema.replace("published_at TEXT,", "published_at TEXT NOT NULL,")
+    with sqlite3.connect(db) as conn:
+        conn.executescript(schema)
+        # Primera migración sin datos y posterior carga prueba la compatibilidad del importador.
+        initialize(conn)
+    import_batch(manifest, data, db)
+    with sqlite3.connect(db) as conn:
+        conn.execute("DROP VIEW report_post_latest")
+        conn.execute("ALTER TABLE fact_post DROP COLUMN published_label")
+    posts = load_posts(db)
+    assert len(posts) == 1
+    assert posts.iloc[0]["likes"] == 5
+    assert quality(db)["snapshots"] == 1
+    assert quality(db)["fk_errors"] == 0
+
+
+def test_structured_observation_rejects_metrics_changed_in_csv(tmp_path):
+    manifest, data = _fixture(tmp_path)
+    metadata = json.loads(manifest.read_text(encoding="utf-8"))
+    metadata["evidence_format"] = "epis_observation_v1"
+    evidence = {"account_id": metadata["account_id"], "captured_at": "2026-10-10T15:00:00-05:00",
+                "observations": [{"post_id": "post-1", "post_url": "https://www.linkedin.com/posts/cuenta-prueba_post-1", "likes": 4}]}
+    Path(metadata["source_evidence_path"]).write_text(json.dumps(evidence), encoding="utf-8")
+    manifest.write_text(json.dumps(metadata), encoding="utf-8")
+    with pytest.raises(ValueError, match="likes no coincide"):
+        import_batch(manifest, data, tmp_path / "warehouse.db")
+
+
+def test_vps_inbox_imports_real_format_without_aws_and_reports_incomplete_batch(tmp_path):
+    from unidad2.inbox_ingest import run
+    inbox = tmp_path / "inbox"
+    valid = inbox / "valid"
+    valid.mkdir(parents=True)
+    _fixture(valid)
+    incomplete = inbox / "incomplete"
+    incomplete.mkdir()
+    shutil.copyfile(valid / "manifest.json", incomplete / "manifest.json")
+    db = tmp_path / "warehouse.db"
+    result = run(inbox, db)
+    assert result["imported"] == 1
+    assert len(result["failed"]) == 1
+    assert run(inbox, db)["already_imported"] == 1

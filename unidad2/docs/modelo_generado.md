@@ -51,6 +51,7 @@ erDiagram
     TEXT external_id
     TEXT post_url
     TEXT published_at
+    TEXT published_label
     TEXT topic
     INTEGER first_batch_id
   }
@@ -67,9 +68,9 @@ erDiagram
   }
   dim_platform ||--o{ dim_account : platform_id
   import_batch ||--o{ fact_post : first_batch_id
-  dim_date ||--o{ fact_post : date_key
-  dim_content_type ||--o{ fact_post : content_type_id
-  dim_project ||--o{ fact_post : project_id
+  dim_date o|--o{ fact_post : date_key
+  dim_content_type o|--o{ fact_post : content_type_id
+  dim_project o|--o{ fact_post : project_id
   dim_account ||--o{ fact_post : account_id
   dim_platform ||--o{ fact_post : platform_id
   import_batch ||--o{ fact_metric_snapshot : batch_id
